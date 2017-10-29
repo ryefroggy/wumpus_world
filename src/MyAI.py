@@ -20,12 +20,6 @@
 import random
 from Agent import Agent
 
-def print_map(m):
-    for x in m:
-        for y in x:
-            print(y, end=' ')
-        print()
-
 class MyAI(Agent):
 
     def __init__(self):
@@ -75,8 +69,6 @@ class MyAI(Agent):
         if not self._backtracking:
             self._backtracking = True
         x,y = self._breadcrumbs[-1]
-        print(self._breadcrumbs[-1])
-        print(self._x, self._y)
         if x - self._x == 1:
             return self._go_adjacent('R')
         if x - self._x == -1:
@@ -87,7 +79,6 @@ class MyAI(Agent):
             return self._go_adjacent('D')
 
     def _go_adjacent(self, direction):
-        print(self._facing, 'want to go', direction)
         if self._facing == direction:
             if self._backtracking:
                 self._breadcrumbs.pop()
@@ -119,13 +110,6 @@ class MyAI(Agent):
         # ======================================================================
         # YOUR CODE BEGINS
         # ======================================================================
-
-        # debug
-        if self._backtracking:
-            print('BACKTRACKING')
-        print('stack :', self._stack)
-        print('visited :', self._visited)
-        print('breadcrumbs :', self._breadcrumbs)
 
         if self._has_gold:
             return self._backtrack()
@@ -159,19 +143,36 @@ class MyAI(Agent):
                 self._stack.pop()
                 self._visited.add(to_expand)
                 safe = True
-                if self._x != self._x_bound:
-                    adj = self._map[self._x+1][self._y]
+
+                #expand left
+                if self._x != 0:
+                    adj = self._map[self._x-1][self._y]
                     if breeze and adj != MyAI.__marks['SAFE']:
-                        self._map[self._x+1][self._y] = MyAI.__marks['PIT']
+                        self._map[self._x-1][self._y] = MyAI.__marks['PIT']
                         safe = False
                     if not self._stench_found and stench and adj != MyAI.__marks['SAFE']:
-                        self._map[self._x+1][self._y] = MyAI.__marks['WUMP']
-                        self._wump_cords.add((self._x+1, self._y))
+                        self._map[self._x-1][self._y] = MyAI.__marks['WUMP']
+                        self._wump_cords.add((self._x-1, self._y))
                         safe = False
                     if safe:
-                        self._map[self._x+1][self._y] = MyAI.__marks['SAFE']
-                        self._stack.append((self._x+1, self._y))
+                        self._map[self._x-1][self._y] = MyAI.__marks['SAFE']
+                        self._stack.append((self._x-1, self._y))
+                
+                #expand down
+                if self._y != 0:
+                    adj = self._map[self._x][self._y-1]
+                    if breeze and adj != MyAI.__marks['SAFE']:
+                        self._map[self._x][self._y-1] = MyAI.__marks['PIT']
+                        safe = False
+                    if not self._stench_found and stench and adj != MyAI.__marks['SAFE']:
+                        self._map[self._x][self._y-1] = MyAI.__marks['WUMP']
+                        self._wump_cords.add((self._x, self._y-1))
+                        safe = False
+                    if safe:
+                        self._map[self._x][self._y-1] = MyAI.__marks['SAFE']
+                        self._stack.append((self._x, self._y-1))
 
+                # expand up
                 if self._y != self._y_bound:
                     adj = self._map[self._x][self._y+1]
                     if breeze and adj != MyAI.__marks['SAFE']:
@@ -185,31 +186,20 @@ class MyAI(Agent):
                         self._map[self._x][self._y+1] = MyAI.__marks['SAFE']
                         self._stack.append((self._x, self._y+1))
 
-                if self._x != 0:
-                    adj = self._map[self._x-1][self._y]
+                # expand right
+                if self._x != self._x_bound:
+                    adj = self._map[self._x+1][self._y]
                     if breeze and adj != MyAI.__marks['SAFE']:
-                        self._map[self._x-1][self._y] = MyAI.__marks['PIT']
+                        self._map[self._x+1][self._y] = MyAI.__marks['PIT']
                         safe = False
                     if not self._stench_found and stench and adj != MyAI.__marks['SAFE']:
-                        self._map[self._x-1][self._y] = MyAI.__marks['WUMP']
-                        self._wump_cords.add((self._x-1, self._y))
+                        self._map[self._x+1][self._y] = MyAI.__marks['WUMP']
+                        self._wump_cords.add((self._x+1, self._y))
                         safe = False
                     if safe:
-                        self._map[self._x-1][self._y] = MyAI.__marks['SAFE']
-                        self._stack.append((self._x-1, self._y))
+                        self._map[self._x+1][self._y] = MyAI.__marks['SAFE']
+                        self._stack.append((self._x+1, self._y))
 
-                if self._y != 0:
-                    adj = self._map[self._x][self._y-1]
-                    if breeze and adj != MyAI.__marks['SAFE']:
-                        self._map[self._x][self._y-1] = MyAI.__marks['PIT']
-                        safe = False
-                    if not self._stench_found and stench and adj != MyAI.__marks['SAFE']:
-                        self._map[self._x][self._y-1] = MyAI.__marks['WUMP']
-                        self._wump_cords.add((self._x, self._y-1))
-                        safe = False
-                    if safe:
-                        self._map[self._x][self._y-1] = MyAI.__marks['SAFE']
-                        self._stack.append((self._x, self._y-1))
             else:
                 x, y = to_expand
                 if self._x == x or self._y == y:
