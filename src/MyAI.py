@@ -41,15 +41,14 @@ class MyAI(Agent):
         self._facing = 'R'
         self._stack = [(0,0)]
         self._visited = set()
-        self._map = [[ MyAI.__marks['NULL'] for i in range(10) ] for i in range(4)]
+        self._map = [[ MyAI.__marks['NULL'] for i in range(11) ] for i in range(11)]
         self._map[0][0] = MyAI.__marks['SAFE']
         self._x = 0
         self._y = 0
         self._backtracking = False
-        self._turning_around = False
 
         # map bounds
-        self._x_bound = 3
+        self._x_bound = 9
         self._y_bound = 9
 
         # ======================================================================
@@ -75,45 +74,45 @@ class MyAI(Agent):
             return Agent.Action.CLIMB
         if not self._backtracking:
             self._backtracking = True
-            self._turning_around = True
-            return self._update_facing(Agent.Action.TURN_LEFT)
-        if self._turning_around:
-            self._turning_around = False
-            return self._update_facing(Agent.Action.TURN_LEFT)
-        return self._update_facing(self._breadcrumbs.pop())
+        x,y = self._breadcrumbs[-1]
+        print(self._breadcrumbs[-1])
+        print(self._x, self._y)
+        if x - self._x == 1:
+            return self._go_adjacent('R')
+        if x - self._x == -1:
+            return self._go_adjacent('L')
+        if y - self._y == 1:
+            return self._go_adjacent('U')
+        if y - self._y == -1:
+            return self._go_adjacent('D')
 
     def _go_adjacent(self, direction):
         print(self._facing, 'want to go', direction)
         if self._facing == direction:
-            self._breadcrumbs.append(Agent.Action.FORWARD)
+            if self._backtracking:
+                self._breadcrumbs.pop()
+            else:
+                self._breadcrumbs.append((self._x, self._y))
             return self._update_facing(Agent.Action.FORWARD)
         if self._facing == 'L':
             if direction == 'U':
-                self._breadcrumbs.append(Agent.Action.TURN_LEFT)
                 return self._update_facing(Agent.Action.TURN_RIGHT)
             else:
-                self._breadcrumbs.append(Agent.Action.TURN_RIGHT)
                 return self._update_facing(Agent.Action.TURN_LEFT)
         if self._facing == 'R':
             if direction == 'U':
-                self._breadcrumbs.append(Agent.Action.TURN_RIGHT)
                 return self._update_facing(Agent.Action.TURN_LEFT)
             else:
-                self._breadcrumbs.append(Agent.Action.TURN_LEFT)
                 return self._update_facing(Agent.Action.TURN_RIGHT)
         if self._facing == 'U':
             if direction == 'L':
-                self._breadcrumbs.append(Agent.Action.TURN_RIGHT)
                 return self._update_facing(Agent.Action.TURN_LEFT)
             else:
-                self._breadcrumbs.append(Agent.Action.TURN_LEFT)
                 return self._update_facing(Agent.Action.TURN_RIGHT)
         if self._facing == 'D':
             if direction == 'R':
-                self._breadcrumbs.append(Agent.Action.TURN_RIGHT)
                 return self._update_facing(Agent.Action.TURN_LEFT)
             else:
-                self._breadcrumbs.append(Agent.Action.TURN_LEFT)
                 return self._update_facing(Agent.Action.TURN_RIGHT)
 
     def getAction(self, stench, breeze, glitter, bump, scream):
@@ -124,9 +123,9 @@ class MyAI(Agent):
         # debug
         if self._backtracking:
             print('BACKTRACKING')
-        print(self._stack)
-        print(self._visited)
-        print(self._breadcrumbs)
+        print('stack :', self._stack)
+        print('visited :', self._visited)
+        print('breadcrumbs :', self._breadcrumbs)
 
         if self._has_gold:
             return self._backtrack()
@@ -137,15 +136,17 @@ class MyAI(Agent):
 
         if bump:
             if self._facing == 'R':
+                self._x -= 1
                 self._x_bound = self._x
             else:
+                self._y -= 1
                 self._y_bound = self._y
             self._stack.pop()
             self._breadcrumbs.pop()
+            return self._backtrack()
 
         while True:
             # find next stack top where it is not in visited i.e find next node to expand
-            print(self._x, self._y)
             while (len(self._stack) != 0 and (self._stack[-1] in self._visited or self._stack[-1][0] > self._x_bound or self._stack[-1][1] > self._y_bound)):
                 self._stack.pop()
             if len(self._stack) == 0:
@@ -159,7 +160,6 @@ class MyAI(Agent):
                 self._visited.add(to_expand)
                 safe = True
                 if self._x != self._x_bound:
-                    print('checking right')
                     adj = self._map[self._x+1][self._y]
                     if breeze and adj != MyAI.__marks['SAFE']:
                         self._map[self._x+1][self._y] = MyAI.__marks['PIT']
@@ -222,8 +222,7 @@ class MyAI(Agent):
                         return self._go_adjacent('U')
                     if y - self._y == -1:
                         return self._go_adjacent('D')
-                else:
-                    return self._backtrack()
+                return self._backtrack()
 
         # ======================================================================
         # YOUR CODE ENDS
