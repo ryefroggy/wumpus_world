@@ -81,7 +81,7 @@ class MyAI(Agent):
         if y - self._y == -1:
             return self._go_adjacent('D')
 
-    def _find_path_home(self):
+    def _find_path_shortest(self, dest):
         queue = deque()
         visited = set()
         queue.append([(self._x, self._y)])
@@ -89,7 +89,7 @@ class MyAI(Agent):
             current = queue.popleft()
             x = current[-1][0]
             y = current[-1][1]
-            if x == 0 and y == 0:
+            if x == dest[0] and y == dest[1]:
                 current = current[1:]
                 self._breadcrumbs = current[::-1]
                 break
@@ -140,7 +140,7 @@ class MyAI(Agent):
             return self._backtrack()
 
         if glitter:
-            self._find_path_home()
+            self._find_path_shortest((0, 0))
             self._has_gold = True
             return Agent.Action.GRAB
 
@@ -167,15 +167,15 @@ class MyAI(Agent):
                 self._y -= 1
                 self._y_bound = self._y
             self._stack.pop()
-            self._breadcrumbs.pop()
-            return self._backtrack()
+            # self._breadcrumbs.pop()
+            # return self._backtrack()
 
         while True:
             # find next stack top where it is not in visited i.e find next node to expand
             while (len(self._stack) != 0 and (self._stack[-1] in self._visited or self._stack[-1][0] > self._x_bound or self._stack[-1][1] > self._y_bound)):
                 self._stack.pop()
             if len(self._stack) == 0:
-                self._find_path_home()
+                self._find_path_shortest((0, 0))
                 return self._backtrack()
 
             to_expand = self._stack[-1]
@@ -243,17 +243,18 @@ class MyAI(Agent):
                         self._stack.append((self._x+1, self._y))
 
             else:
-                x, y = to_expand
-                if self._x == x or self._y == y:
-                    self._backtracking = False
-                    if x - self._x == 1:
-                        return self._go_adjacent('R')
-                    if x - self._x == -1:
-                        return self._go_adjacent('L')
-                    if y - self._y == 1:
-                        return self._go_adjacent('U')
-                    if y - self._y == -1:
-                        return self._go_adjacent('D')
+                self._find_path_shortest(to_expand)
+                # x, y = to_expand
+                # if self._x == x or self._y == y:
+                #     self._backtracking = False
+                #     if x - self._x == 1:
+                #         return self._go_adjacent('R')
+                #     if x - self._x == -1:
+                #         return self._go_adjacent('L')
+                #     if y - self._y == 1:
+                #         return self._go_adjacent('U')
+                #     if y - self._y == -1:
+                #         return self._go_adjacent('D')
                 return self._backtrack()
 
         # ======================================================================
