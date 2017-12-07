@@ -19,6 +19,7 @@
 
 import random
 from Agent import Agent
+from collections import deque
 
 class MyAI(Agent):
 
@@ -78,6 +79,28 @@ class MyAI(Agent):
         if y - self._y == -1:
             return self._go_adjacent('D')
 
+    def _find_path_home(self):
+        queue = deque()
+        visited = set()
+        queue.append([(self._x, self._y)])
+        while len(queue) != 0:
+            current = queue.popleft()
+            x = current[-1][0]
+            y = current[-1][1]
+            if x == 0 and y == 0:
+                current = current[1:]
+                self._breadcrumbs = current[::-1]
+                break
+            adjacents = [(x,y+1),(x+1,y),(x,y-1),(x-1,y)]
+            for i in adjacents:
+                if i not in visited and self._check_bounds(i[0], i[1]) and self._map[i[0]][i[1]] == MyAI.__marks['SAFE']:
+                    temp = list(current)
+                    temp.append(i) 
+                    queue.append(temp)
+
+    def _check_bounds(self, x, y):
+        return 0 <= x <= self._x_bound and 0 <= y <= self._y_bound
+
     def _go_adjacent(self, direction):
         if self._facing == direction:
             if self._backtracking:
@@ -115,6 +138,7 @@ class MyAI(Agent):
             return self._backtrack()
 
         if glitter:
+            self._find_path_home()
             self._has_gold = True
             return Agent.Action.GRAB
 
@@ -134,6 +158,7 @@ class MyAI(Agent):
             while (len(self._stack) != 0 and (self._stack[-1] in self._visited or self._stack[-1][0] > self._x_bound or self._stack[-1][1] > self._y_bound)):
                 self._stack.pop()
             if len(self._stack) == 0:
+                self._find_path_home()
                 return self._backtrack()
 
             to_expand = self._stack[-1]
