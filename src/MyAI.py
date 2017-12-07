@@ -28,6 +28,8 @@ class MyAI(Agent):
         # YOUR CODE BEGINS
         # ======================================================================
 
+        self._just_shot = False
+        self._shot = False
         self._has_gold = False
         self._wumpus_alive = True
         self._wump_cords = set()
@@ -95,7 +97,7 @@ class MyAI(Agent):
             for i in adjacents:
                 if i not in visited and self._check_bounds(i[0], i[1]) and self._map[i[0]][i[1]] == MyAI.__marks['SAFE']:
                     temp = list(current)
-                    temp.append(i) 
+                    temp.append(i)
                     queue.append(temp)
 
     def _check_bounds(self, x, y):
@@ -142,6 +144,21 @@ class MyAI(Agent):
             self._has_gold = True
             return Agent.Action.GRAB
 
+        if self._x == 0 and self._y == 0 and not breeze and stench and not self._shot:
+            self._just_shot = True
+            self._shot = True
+            return Agent.Action.SHOOT
+        if self._x == 0 and self._y == 0 and not breeze and self._just_shot:
+            if scream:
+                self._map[self._x+1][self._y] = MyAI.__marks['SAFE']
+                self._map[self._x][self._y+1] = MyAI.__marks['SAFE']
+                self._wumpus_alive = False
+            else:
+                self._map[self._x+1][self._y] = MyAI.__marks['SAFE']
+                self._map[self._x][self._y+1] = MyAI.__marks['WUMP']
+            self._just_shot = False
+
+
         if bump:
             if self._facing == 'R':
                 self._x -= 1
@@ -175,21 +192,21 @@ class MyAI(Agent):
                     if breeze and adj != MyAI.__marks['SAFE']:
                         self._map[self._x-1][self._y] = MyAI.__marks['PIT']
                         safe = False
-                    if not self._stench_found and stench and adj != MyAI.__marks['SAFE']:
+                    if not self._stench_found and self._wumpus_alive and stench and adj != MyAI.__marks['SAFE']:
                         self._map[self._x-1][self._y] = MyAI.__marks['WUMP']
                         self._wump_cords.add((self._x-1, self._y))
                         safe = False
                     if safe:
                         self._map[self._x-1][self._y] = MyAI.__marks['SAFE']
                         self._stack.append((self._x-1, self._y))
-                
+
                 #expand down
                 if self._y != 0:
                     adj = self._map[self._x][self._y-1]
                     if breeze and adj != MyAI.__marks['SAFE']:
                         self._map[self._x][self._y-1] = MyAI.__marks['PIT']
                         safe = False
-                    if not self._stench_found and stench and adj != MyAI.__marks['SAFE']:
+                    if not self._stench_found and self._wumpus_alive and stench and adj != MyAI.__marks['SAFE']:
                         self._map[self._x][self._y-1] = MyAI.__marks['WUMP']
                         self._wump_cords.add((self._x, self._y-1))
                         safe = False
@@ -203,7 +220,7 @@ class MyAI(Agent):
                     if breeze and adj != MyAI.__marks['SAFE']:
                         self._map[self._x][self._y+1] = MyAI.__marks['PIT']
                         safe = False
-                    if not self._stench_found and stench and adj != MyAI.__marks['SAFE']:
+                    if not self._stench_found and self._wumpus_alive and stench and adj != MyAI.__marks['SAFE']:
                         self._map[self._x][self._y+1] = MyAI.__marks['WUMP']
                         self._wump_cords.add((self._x, self._y+1))
                         safe = False
@@ -217,7 +234,7 @@ class MyAI(Agent):
                     if breeze and adj != MyAI.__marks['SAFE']:
                         self._map[self._x+1][self._y] = MyAI.__marks['PIT']
                         safe = False
-                    if not self._stench_found and stench and adj != MyAI.__marks['SAFE']:
+                    if not self._stench_found and self._wumpus_alive and stench and adj != MyAI.__marks['SAFE']:
                         self._map[self._x+1][self._y] = MyAI.__marks['WUMP']
                         self._wump_cords.add((self._x+1, self._y))
                         safe = False
